@@ -1,0 +1,25 @@
+#標題ETL
+
+import json
+import glob
+import re
+
+for name in glob.glob('E:/news_----_20181109_*'):
+    with open(name, 'r',encoding='UTF-8') as f:
+        data = json.load(f)
+        
+    for t in data:
+        t['title']=t['title']#.replace("\u3000"," ").replace("\n"," ").replace("觀點投書：","").replace("風評：","")
+        
+        #去除"xxx專欄:"
+        t['title']=re.sub(r".*[\u5c08][\u6b04]\：","",t['title'])
+        #去除"xxx觀點:"
+        t['title']=re.sub(r".*[\u89c0][\u9ede]\：","",t['title'])
+        t['title']=re.sub(r"\【.*\】","",t['title'])
+        t['title']=re.sub(r".*\》","",t['title'])
+        
+        print("========================================")
+       # print(re.search(r"\【.*\】",t['title']))
+        print(t['title'])
+with open( "StormMedia_all", 'w', encoding="utf-8") as outfile:
+    json.dump(data, outfile)
