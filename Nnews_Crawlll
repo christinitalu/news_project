@@ -1,0 +1,79 @@
+import requests
+from bs4 import BeautifulSoup
+import time
+import random
+import json
+import sys
+
+now_news = []    
+p=1
+for page in range(1,815):
+    href = 'https://www.nownews.com/cat/politics/page/'+str(page)
+    #print("p",page,":",href)
+   
+    response = requests.get(href)
+    soup=BeautifulSoup(response.text)
+    all_news = soup.find_all("div",class_="td_block_inner tdb-block-inner td-fix-index")
+
+    news = all_news[1].find_all("h3",class_="entry-title")
+    for n in news:
+        try:
+            link=n.find("a")["href"]
+            #print(link)
+            response = requests.get(link)
+            html= BeautifulSoup(response.text)
+            ti=html.find("h1",class_="entry-title").text
+            #print(ti)
+            img=html.find("div",class_="td-post-featured-image")
+            img=img.find("img")["src"]
+            da=html.find("time",class_="entry-date").text
+    #         kw=html.find("ul",class_="td-tags").find_all("a")
+    #         key = []
+    #         for k in kw:
+    #             key.append(k.text)
+
+            au=html.find("div",class_="td-post-author-name").text
+            au = au.split("／")[0]
+            au = au.split("/")[0].replace("記者","").replace("\n","").replace(" ","")
+            te=html.find("div", class_="td-post-content").contents
+            #print(te)
+            #print(te[0].name == None)
+            content = ""
+            for a in te:
+                if a.name == "p":
+                    content= content+ a.text
+
+            #處理keyword
+            if not html.find("ul",class_="td-tags")==None:
+                kw=html.find("ul",class_="td-tags").find_all("a")
+                key = []
+                for k in kw:
+                    key.append(k.text)
+            else:
+                key = None
+        except:
+            print("錯誤",ti,link)
+        #print("source :","NOWnews")
+        #print("title :",ti)
+        #print("img:",img)
+        #print("url :",link)
+        #print("date_ :",da)
+        #print("type :","net")
+        #print("author :",au)
+        #print("kw :",key)
+        #print("content :",content)
+        #img-url
+        newsd={"source":"NOWnews","title":ti,"url":link,"date_":da,"type":"net","author":au,"kw":key,"content":content,"img-url":img}
+        now_news.append(newsd)
+        
+        time.sleep(random.randint(0,3))
+    time.sleep(random.randint(0,3))
+    
+#    if (page%100)==0:
+    filename= "NOWnews_20181111_20171101_" + str(page)
+    with open(filename, 'w', encoding="utf-8") as outfile:
+        json.dump(storm_news, outfile)
+    storm_news = [] 
+        #p=p+1
+# with open( "NOWnews_20180919_20171101_final", 'w', encoding="utf-8") as outfile:
+#     json.dump(storm_news, outfile)
