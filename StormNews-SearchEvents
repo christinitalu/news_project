@@ -1,0 +1,60 @@
+from selenium.webdriver import Chrome
+from urllib.request import urlopen
+from bs4 import BeautifulSoup
+import time
+import random
+import json
+
+driver = Chrome("./chromedriver")
+driver.get("https://www...........")
+
+#吳敦義+母豬
+#第一頁的所有網址
+html = driver.find_element_by_xpath("/html").get_attribute('innerHTML')
+all_page = BeautifulSoup(html)
+links=all_page.find_all("div", class_="gs-bidi-start-align gs-visibleUrl gs-visibleUrl-long")
+
+Events_set = set()
+for l in links:
+    Events_set.add(l.text)
+print(Events_set)
+
+#第二頁之後的所有吳敦義+母豬 新聞的url
+
+nextpage=2
+while nextpage < 11:
+    href ='//*[@id="___gcse_0"]/div/div/div/div[5]/div[2]/div/div/div[2]/div[11]/div/div['+ str(nextpage) +']'
+    driver.find_element_by_xpath(href).click()
+    time.sleep(1)
+    
+    html = driver.find_element_by_xpath("/html").get_attribute('innerHTML')
+    all_page = BeautifulSoup(html)
+    links=all_page.find_all("div", class_="gs-bidi-start-align gs-visibleUrl gs-visibleUrl-long")
+    
+    for l in links:
+        if "https://www.storm.mg/article/" in l.text:
+            Events_set.add(l.text)
+    
+    nextpage=nextpage+1
+print(Events_set)  
+
+stormNews_event=[]
+#吳敦義+母豬裝進list
+for link in Events_set:
+    if not link ==' ':
+        response = urlopen(link)
+        html = BeautifulSoup(response)
+        te=html.find("div", id="CMS_wrapper").text.replace("\n","").replace("\t","")
+        ti=html.find("h1",id="article_title").text
+        da=html.find("span", class_="info_time").text
+        au=html.find("span", class_="info_author").text
+        kw=html.find("div", id="tags_list_wrapepr").text.split()
+        img=html.find("img", id="feature_img")["src"]
+        newsd={}
+        if "吳敦義" in te and "母豬" in te :
+            newsd={"source":"StormMedia","title":ti,"url":link,"date_":da,"type":"net","author":au,"kw":kw,"content":te,"img_url":img,"event":"pig"}
+            stormNews_event.append(newsd)
+print(stormNews_event)
+
+with open( "StormNews_Events.json", 'w', encoding="utf-8") as outfile:
+    json.dump(stormNews_event, outfile)
